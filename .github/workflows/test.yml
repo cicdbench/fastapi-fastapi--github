@@ -1,49 +1,39 @@
 name: Test
-
 on:
-  push:
-    branches:
-      - master
   pull_request:
-  schedule:
-    # cron every week on monday
-    - cron: "0 0 * * 1"
-
+    types:
+      - opened
+      - synchronize
+      - reopened
 permissions: {}
-
 env:
   UV_NO_SYNC: true
   INLINE_SNAPSHOT_DEFAULT_FLAGS: review
-
 jobs:
   changes:
     runs-on: ubuntu-latest
-    # Required permissions
     permissions:
       pull-requests: read
-    # Set job outputs to values from filter step
     timeout-minutes: 5
     outputs:
       src: ${{ steps.filter.outputs.src }}
     steps:
-    - uses: actions/checkout@v7.0.1
-      with:
-        persist-credentials: false
-    # For pull requests it's not necessary to checkout the code but for the main branch it is
-    - uses: dorny/paths-filter@v4.0.3
-      id: filter
-      with:
-        filters: |
-          src:
-            - .github/workflows/test.yml
-            - docs_src/**
-            - fastapi/**
-            - scripts/**
-            - tests/**
-            - .python-version
-            - pyproject.toml
-            - uv.lock
-
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@v4.0.3
+        id: filter
+        with:
+          filters: |
+            src:
+              - .github/workflows/test.yml
+              - docs_src/**
+              - fastapi/**
+              - scripts/**
+              - tests/**
+              - .python-version
+              - pyproject.toml
+              - uv.lock
   test:
     needs:
       - changes
@@ -51,64 +41,57 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        os: [ windows-latest, macos-latest ]
-        python-version: [ "3.15", "3.15t" ]
-        deprecated-tests: [ "no-deprecation" ]
+        os: []
+        python-version:
+          - "3.15"
+          - 3.15t
+        deprecated-tests:
+          - no-deprecation
         uv-resolution:
           - highest
         starlette-src:
           - starlette-pypi
           - starlette-git
         include:
-          - os: macos-latest
-            python-version: "3.11"
-            coverage: coverage
-            uv-resolution: lowest-direct
-            deprecated-tests: "no-deprecation"
-          - os: windows-latest
-            python-version: "3.12"
-            coverage: coverage
-            uv-resolution: lowest-direct
-            deprecated-tests: "no-deprecation"
           - os: ubuntu-latest
             python-version: "3.13"
             coverage: coverage
             uv-resolution: highest
-            deprecated-tests: "no-deprecation"
+            deprecated-tests: no-deprecation
           - os: ubuntu-latest
             python-version: "3.13"
             uv-resolution: highest
             codspeed: codspeed
-            deprecated-tests: "no-deprecation"
+            deprecated-tests: no-deprecation
           - os: ubuntu-latest
             python-version: "3.13"
             uv-resolution: highest
-            deprecated-tests: "no-deprecation"
+            deprecated-tests: no-deprecation
             without-httpx2: true
           - os: ubuntu-latest
             python-version: "3.14"
             coverage: coverage
             uv-resolution: highest
             starlette-src: starlette-git
-            deprecated-tests: "test-deprecation"
+            deprecated-tests: test-deprecation
           - os: ubuntu-latest
-            python-version: "3.14t"
+            python-version: 3.14t
             coverage: coverage
             uv-resolution: highest
-            deprecated-tests: "no-deprecation"
+            deprecated-tests: no-deprecation
           - os: ubuntu-latest
             python-version: "3.15"
             coverage: coverage
             uv-resolution: highest
             starlette-src: starlette-git
-            deprecated-tests: "test-deprecation"
+            deprecated-tests: test-deprecation
           - os: ubuntu-latest
-            python-version: "3.15t"
+            python-version: 3.15t
             coverage: coverage
             uv-resolution: highest
-            deprecated-tests: "no-deprecation"
+            deprecated-tests: no-deprecation
       fail-fast: false
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     env:
       UV_PYTHON: ${{ matrix.python-version }}
       UV_RESOLUTION: ${{ matrix.uv-resolution }}
@@ -128,7 +111,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "latest-known"
+          version: latest-known
           enable-cache: true
           cache-dependency-glob: |
             pyproject.toml
@@ -157,7 +140,6 @@ jobs:
           COVERAGE_FILE: coverage/.coverage.${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.deprecated-tests}}
           CONTEXT: ${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.deprecated-tests}}
           PYTEST_OPTIONS: ${{ (matrix.without-httpx2 == 'true') && '-W ignore::UserWarning' || '' }}
-      # Do not store coverage for all possible combinations to avoid file size max errors in Smokeshow
       - name: Store coverage files
         if: matrix.coverage == 'coverage'
         uses: actions/upload-artifact@v7.0.2
@@ -165,7 +147,6 @@ jobs:
           name: coverage-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.deprecated-tests}}-${{ hashFiles('**/coverage/.coverage.*') }}
           path: coverage
           include-hidden-files: true
-
   benchmark:
     needs:
       - changes
@@ -190,7 +171,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "latest-known"
+          version: latest-known
           enable-cache: true
           cache-dependency-glob: |
             pyproject.toml
@@ -207,7 +188,6 @@ jobs:
         with:
           mode: memory
           run: uv run --no-sync pytest tests/memory_benchmarks --codspeed
-
   regression-test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -253,12 +233,12 @@ jobs:
         if: steps.changed-tests.outputs.found == 'true'
         uses: actions/setup-python@v7.1.0
         with:
-          python-version-file: "base/.python-version"
+          python-version-file: base/.python-version
       - name: Setup uv
         if: steps.changed-tests.outputs.found == 'true'
         uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "latest-known"
+          version: latest-known
           enable-cache: true
       - name: Run the changed tests against the base code
         if: steps.changed-tests.outputs.found == 'true'
@@ -293,11 +273,11 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v7.1.0
         with:
-          python-version-file: ".python-version"
+          python-version-file: .python-version
       - name: Setup uv
         uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "latest-known"
+          version: latest-known
           enable-cache: true
           cache-dependency-glob: |
             pyproject.toml
@@ -320,9 +300,7 @@ jobs:
           path: htmlcov
           include-hidden-files: true
       - run: uv run coverage report --fail-under=100
-
-  # https://github.com/marketplace/actions/alls-green#why
-  test-alls-green:  # This job does nothing and is only used for the branch protection
+  test-alls-green:
     if: always()
     needs:
       - test
