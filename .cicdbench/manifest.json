@@ -1,0 +1,61 @@
+{
+  "provider": "github",
+  "round": "gate-r1",
+  "manifests": {
+    ".github/workflows/test.yml": {
+      "removedTriggers": [
+        "push",
+        "schedule"
+      ],
+      "removedEnv": [],
+      "removedJobs": [],
+      "runsOnChanges": [
+        {
+          "job": "changes",
+          "from": "ubuntu-latest"
+        },
+        {
+          "job": "test",
+          "from": "${{ matrix.os }}"
+        },
+        {
+          "job": "benchmark",
+          "from": "ubuntu-latest"
+        },
+        {
+          "job": "regression-test",
+          "from": "ubuntu-latest"
+        },
+        {
+          "job": "coverage-combine",
+          "from": "ubuntu-latest"
+        },
+        {
+          "job": "test-alls-green",
+          "from": "ubuntu-latest"
+        }
+      ],
+      "localReusable": [],
+      "removedSteps": []
+    }
+  },
+  "deleted": [
+    ".github/workflows/add-to-project.yml",
+    ".github/workflows/build-docs.yml",
+    ".github/workflows/bump-pre-commit-hooks.yml",
+    ".github/workflows/create-draft-release.yml",
+    ".github/workflows/deploy-docs.yml",
+    ".github/workflows/detect-conflicts.yml",
+    ".github/workflows/guard-dependencies.yml",
+    ".github/workflows/issue-manager.yml",
+    ".github/workflows/pre-commit.yml",
+    ".github/workflows/prepare-release.yml",
+    ".github/workflows/publish.yml",
+    ".github/workflows/smokeshow.yml",
+    ".github/workflows/sponsors.yml",
+    ".github/workflows/test-redistribute.yml",
+    ".github/workflows/topic-repos.yml",
+    ".github/workflows/translate.yml",
+    ".github/workflows/zizmor.yml"
+  ]
+}
